@@ -1,4 +1,4 @@
-const CACHE_NAME = "cotizago-v3"; // cambia versión cuando actualices archivos
+const CACHE_NAME = "cotizago-v1"; // cambia versión cuando actualices archivos
 const CORE = [
   "./",
   "./index.html",
