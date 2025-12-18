@@ -1,0 +1,93 @@
+{
+  "vigencia": "2025-12",
+  "msi": {
+    "enganche_min": 0.5,
+    "vehiculos": {
+      "*": []
+    }
+  },
+  "planes": [
+    {
+      "id": "tradicional",
+      "nombre": "TRADICIONAL",
+      "tasas_por_enganche": [
+        {
+          "min": 0.05,
+          "max": 0.0999,
+          "tasa_anual": 0.1799,
+          "plazos_meses": [
+            12,
+            24,
+            36,
+            48,
+            60
+          ]
+        },
+        {
+          "min": 0.1,
+          "max": 0.1999,
+          "tasa_anual": 0.1699,
+          "plazos_meses": [
+            12,
+            24,
+            36,
+            48,
+            60
+          ]
+        },
+        {
+          "min": 0.2,
+          "max": 0.2999,
+          "tasa_anual": 0.1499,
+          "plazos_meses": [
+            12,
+            24,
+            36,
+            48,
+            60,
+            72
+          ]
+        },
+        {
+          "min": 0.3,
+          "max": 0.3999,
+          "tasa_anual": 0.1199,
+          "plazos_meses": [
+            12,
+            24,
+            36,
+            48,
+            60,
+            72
+          ]
+        },
+        {
+          "min": 0.4,
+          "max": 0.4999,
+          "tasa_anual": 0.1049,
+          "plazos_meses": [
+            12,
+            24,
+            36,
+            48,
+            60,
+            72
+          ]
+        },
+        {
+          "min": 0.5,
+          "max": 1.0,
+          "tasa_anual": 0.0949,
+          "plazos_meses": [
+            12,
+            24,
+            36,
+            48,
+            60,
+            72
+          ]
+        }
+      ]
+    }
+  ]
+}

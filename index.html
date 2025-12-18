@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>Cotizador Tradicional</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">CT</div>
+      <div class="brandtext">
+        <div class="title">Cotizador Tradicional</div>
+        <div class="subtitle">Opción 2 · Amortización + IVA + Seguros</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button id="btnInstall" class="btn ghost" hidden>Instalar</button>
+      <button id="btnUpdate" class="btn warn" hidden>Actualizar</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="grid">
+      <div class="card">
+        <div class="card-h">
+          <h2>Vehículo</h2>
+          <div class="pill" id="vigenciaPill">Cargando…</div>
+        </div>
+
+        <div class="row2">
+          <label class="field">
+            <span>Modelo</span>
+            <select id="selModelo"></select>
+          </label>
+          <label class="field">
+            <span>Versión</span>
+            <select id="selVersion"></select>
+          </label>
+        </div>
+
+        <div class="row2">
+          <label class="field">
+            <span>Año</span>
+            <input id="inpAnio" type="number" inputmode="numeric" value="2026" />
+          </label>
+          <label class="field">
+            <span>Precio (editable)</span>
+            <input id="inpPrecio" type="text" inputmode="decimal" />
+          </label>
+        </div>
+
+        <div class="hint">Tip: al elegir modelo/versión, el precio se carga desde <code>json/precios.json</code>. Puedes editarlo si hay descuento.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <h2>Financiamiento</h2>
+          <div class="pill ok" id="tasaPill">Tasa: —</div>
+        </div>
+
+        <div class="row2">
+          <label class="field">
+            <span>Plan</span>
+            <select id="selPlan"></select>
+          </label>
+          <label class="field">
+            <span>Plazo</span>
+            <select id="selPlazo"></select>
+          </label>
+        </div>
+
+        <div class="row2">
+          <label class="field">
+            <span>Enganche ($)</span>
+            <input id="inpEngancheMonto" type="text" inputmode="decimal" placeholder="Ej. 100000" />
+          </label>
+          <label class="field">
+            <span>Enganche (%)</span>
+            <input id="inpEnganchePct" type="text" inputmode="decimal" placeholder="Ej. 30" />
+          </label>
+        </div>
+
+        <div class="row2">
+          <label class="field">
+            <span>Fecha cotización</span>
+            <input id="inpFechaCot" type="date" />
+          </label>
+          <label class="field">
+            <span>Día de pago</span>
+            <select id="selDiaPago">
+              <option value="auto" selected>Auto (1 o 15)</option>
+              <option value="1">1</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row3">
+          <label class="field">
+            <span>Comisión</span>
+            <select id="selComision">
+              <option value="0">0%</option>
+              <option value="0.02">2%</option>
+              <option value="0.025">2.5%</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Seguro Vida</span>
+            <input id="inpVidaMonto" type="text" inputmode="decimal" value="5000" />
+          </label>
+          <label class="field">
+            <span>Vida</span>
+            <select id="selVidaTipo">
+              <option value="financiado" selected>Financiado</option>
+              <option value="contado">Contado</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row3">
+          <label class="field">
+            <span>Seguro Daños</span>
+            <input id="inpDaniosMonto" type="text" inputmode="decimal" value="0" />
+          </label>
+          <label class="field">
+            <span>Daños</span>
+            <select id="selDaniosTipo">
+              <option value="cuenta_cliente" selected>Por cuenta del cliente</option>
+              <option value="financiado">Financiado</option>
+              <option value="contado">Contado</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>MSI (solo si aplica)</span>
+            <select id="selMsi" disabled>
+              <option value="off" selected>No</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row2">
+          <label class="field inline">
+            <input id="chkAnualidades" type="checkbox" />
+            <span>Anualidades (cargo anual)</span>
+          </label>
+          <label class="field">
+            <span>Monto anualidad ($)</span>
+            <input id="inpAnualidadMonto" type="text" inputmode="decimal" value="0" />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="btnCalcular" class="btn primary">Calcular</button>
+          <button id="btnCopiar" class="btn ghost" disabled>Copiar para WhatsApp</button>
+          <button id="btnTabla" class="btn ghost" disabled>Ver tabla</button>
+          <button id="btnPdf" class="btn primary" disabled>Generar PDF</button>
+        </div>
+
+        <div class="hint">Motor: pago base sin IVA (PMT) + IVA (16% sobre interés) + primas (vida/daños) calculadas como componente separado.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <h2>Resultado</h2>
+          <div class="pill" id="modoPill">Modo: TRADICIONAL</div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="k">Pago mensual aprox.</div>
+            <div class="v" id="outPago">—</div>
+            <div class="s" id="outPagoSub">con IVA + seguros (si aplica)</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Pago inicial</div>
+            <div class="v" id="outInicial">—</div>
+            <div class="s">enganche + seguros contado + comisión</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Monto a financiar</div>
+            <div class="v" id="outFin">—</div>
+            <div class="s">auto + add-ons financiados</div>
+          </div>
+        </div>
+
+        <div class="mini">
+          <div class="minirow"><span>Precio</span><b id="outPrecio">—</b></div>
+          <div class="minirow"><span>Enganche</span><b id="outEnganche">—</b></div>
+          <div class="minirow"><span>Tasa</span><b id="outTasa">—</b></div>
+          <div class="minirow"><span>Plazo</span><b id="outPlazo">—</b></div>
+          <div class="minirow"><span>Comisión</span><b id="outComision">—</b></div>
+          <div class="minirow"><span>Seguro vida</span><b id="outVida">—</b></div>
+          <div class="minirow"><span>Seguro daños</span><b id="outDanios">—</b></div>
+        </div>
+
+        <details class="details" id="detailsTabla">
+          <summary>Tabla de amortización (preview)</summary>
+          <div class="tablewrap">
+            <table id="tblAmort">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Saldo</th>
+                  <th>Capital</th>
+                  <th>Interés</th>
+                  <th>IVA int.</th>
+                  <th>Vida</th>
+                  <th>Daños</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="hint">La tabla completa se calcula igual; aquí mostramos un preview para no saturar pantalla. (Se puede exportar después.)</div>
+        </details>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="muted">Archivos: <code>json/precios.json</code> y <code>json/creditos.json</code>. IVA: 16%.</div>
+      <div class="muted">Hecho para cotizar rápido sin entrar al portal.</div>
+    </footer>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
