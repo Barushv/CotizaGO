@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,13 +10,14 @@
   <link rel="icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <header class="topbar">
     <div class="brand">
       <div class="logo">CT</div>
       <div class="brandtext">
         <div class="title">Cotizador Tradicional</div>
-        <div class="subtitle">Opción 2 · Amortización + IVA + Seguros</div>
+        <div class="subtitle">CotizaGO</div>
       </div>
     </div>
     <div class="topbar-actions">
@@ -54,7 +56,8 @@
           </label>
         </div>
 
-        <div class="hint">Tip: al elegir modelo/versión, el precio se carga desde <code>json/precios.json</code>. Puedes editarlo si hay descuento.</div>
+        <div class="hint">Tip: al elegir modelo/versión, el precio se carga desde <code>json/precios.json</code>. Puedes
+          editarlo si hay descuento.</div>
       </div>
 
       <div class="card">
@@ -161,7 +164,8 @@
           <button id="btnPdf" class="btn primary" disabled>Generar PDF</button>
         </div>
 
-        <div class="hint">Motor: pago base sin IVA (PMT) + IVA (16% sobre interés) + primas (vida/daños) calculadas como componente separado.</div>
+        <div class="hint">Motor: pago base sin IVA (PMT) + IVA (16% sobre interés) + primas (vida/daños) calculadas como
+          componente separado.</div>
       </div>
 
       <div class="card">
@@ -217,18 +221,20 @@
               <tbody></tbody>
             </table>
           </div>
-          <div class="hint">La tabla completa se calcula igual; aquí mostramos un preview para no saturar pantalla. (Se puede exportar después.)</div>
+          <div class="hint">La tabla completa se calcula igual; aquí mostramos un preview para no saturar pantalla. (Se
+            puede exportar después.)</div>
         </details>
       </div>
     </section>
 
     <footer class="foot">
-      <div class="muted">Archivos: <code>json/precios.json</code> y <code>json/creditos.json</code>. IVA: 16%.</div>
-      <div class="muted">Hecho para cotizar rápido sin entrar al portal.</div>
+      <!-- <div class="muted">Archivos: <code>json/precios.json</code> y <code>json/creditos.json</code>. IVA: 16%.</div> -->
+      <div class="muted">Hecho para cotizar rápido sin entrar al portal BBVA por Israel Ortiz.</div>
     </footer>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="app.js"></script>
 </body>
+
 </html>
