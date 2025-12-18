@@ -5,10 +5,6 @@
 */
 const IVA = 0.16;
 
-// MSI (global)
-const MSI_ENGANCHE_MIN = 0.50;
-const MSI_PLAZOS = [12,24,36,48,60,72];
-
 let PRECIOS = null;
 let CREDITOS = null;
 
@@ -61,10 +57,13 @@ function allowedTerms(planId, engPct){
   return r.plazos_meses ?? plan.plazos_meses ?? [12,24,36,48,60,72];
 }
 
-// MSI: global (aplica a cualquier modelo/versión) si enganche >= 50%
-function msiOptionsFor(modelo, version, engPct){
-  if (engPct < MSI_ENGANCHE_MIN) return [];
-  return MSI_PLAZOS.slice();
+// MSI: si aplica por vehículo y enganche >= 50%
+function msiOptionsFor(modelo, engPct){
+  const msi = CREDITOS?.msi;
+  if (!msi) return [];
+  if (engPct < (msi.enganche_min ?? 0.50)) return [];
+  const list = (msi.vehiculos && (msi.vehiculos[modelo] || msi.vehiculos["*"])) || [];
+  return Array.isArray(list) ? list : [];
 }
 
 // Convierte el JSON de precios a una estructura uniforme:
@@ -112,36 +111,6 @@ function parseMoneyString(v){
   return Number.isFinite(n) ? n : 0;
 }
 
-
-function toISODate(d){
-  const pad = (n)=> String(n).padStart(2,"0");
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-function parseISODate(s){
-  if (!s) return new Date();
-  const [y,m,d] = s.split("-").map(Number);
-  return new Date(y, (m||1)-1, d||1);
-}
-function daysDiff(d1, d2){
-  const ms = d2.getTime() - d1.getTime();
-  return Math.max(0, Math.ceil(ms / (1000*60*60*24)));
-}
-function calcDiaPagoAuto(fechaCot){
-  const day = fechaCot.getDate();
-  return (day <= 15) ? 15 : 1;
-}
-function calcPrimerPago(fechaCot, diaPago){
-  const y = fechaCot.getFullYear();
-  const m = fechaCot.getMonth();
-  if (diaPago === 15){
-    if (fechaCot.getDate() <= 15) return new Date(y, m, 15);
-    return new Date(y, m+1, 15);
-  }
-  // diaPago === 1
-  if (fechaCot.getDate() <= 1) return new Date(y, m, 1);
-  return new Date(y, m+1, 1);
-}
-
 async function loadJSON(path){
   const res = await fetch(path, { cache: "no-store" });
   if (!res.ok) throw new Error(`No se pudo cargar ${path}`);
@@ -172,9 +141,8 @@ function syncPrecioFromSelection(force = false){
   const v = currentVersionObj();
   if (!v) return;
 
-  // Regla:
-  // - Al cambiar Modelo/Versión, siempre ponemos el precio del JSON (force=true)
-  // - Si el usuario editó el precio manualmente (descuento), no lo pisamos hasta que cambie selección.
+  // Si cambias modelo/versión, cargamos el precio del JSON siempre.
+  // Si editaste el precio manualmente (descuento), no lo pisamos hasta que vuelvas a cambiar selección.
   if (force || !precioEditado){
     setInputMoney("inpPrecio", v.precio);
     precioEditado = false;
@@ -218,26 +186,18 @@ function refreshRateAndTerms(){
 
   // MSI options
   const modelo = $("selModelo").value;
-  const version = $("selVersion").value;
-  const msiTerms = msiOptionsFor(modelo, version, engPct);
-
+  const msiTerms = msiOptionsFor(modelo, engPct);
   const selMsi = $("selMsi");
-  if (selMsi){
-    const prevMsi = selMsi.value || "off";
-    selMsi.innerHTML = "";
+  selMsi.innerHTML = "";
+  if (msiTerms.length){
+    selMsi.disabled = false;
     selMsi.appendChild(new Option("No", "off"));
-
-    if (msiTerms.length){
-      selMsi.disabled = false;
-      for (const t of msiTerms){
-        selMsi.appendChild(new Option(`${t} MSI`, String(t)));
-      }
-      const prevNum = Number(prevMsi);
-      selMsi.value = (prevMsi !== "off" && msiTerms.includes(prevNum)) ? String(prevNum) : "off";
-    } else {
-      selMsi.disabled = true;
-      selMsi.value = "off";
+    for (const t of msiTerms){
+      selMsi.appendChild(new Option(`${t} MSI`, String(t)));
     }
+  } else {
+    selMsi.disabled = true;
+    selMsi.appendChild(new Option("No", "off"));
   }
 
   // Terms
@@ -255,19 +215,6 @@ function refreshRateAndTerms(){
     $("tasaPill").textContent = "Tasa: —";
     $("outTasa").textContent = "—";
   }
-
-  // Si MSI está seleccionado, mostramos 0% y sincronizamos plazo visible
-  const selMsiNow = $("selMsi");
-  if (selMsiNow && selMsiNow.value !== "off"){
-    const msiTerm = Number(selMsiNow.value);
-    if (!Number.isNaN(msiTerm) && msiTerm > 0){
-      $("tasaPill").textContent = `MSI ${msiTerm} (0% interés)`;
-      $("outTasa").textContent = "0.00% anual";
-      const selPlazo = $("selPlazo");
-      if (selPlazo) selPlazo.value = String(msiTerm);
-    }
-  }
-
 }
 
 function computeQuote(){
@@ -283,11 +230,6 @@ function computeQuote(){
   const r = tasaAnual / 12;
 
   const plazo = Number($("selPlazo").value);
-  const fechaCot = parseISODate($("inpFechaCot")?.value);
-  const diaPagoSel = $("selDiaPago")?.value || "auto";
-  const diaPago = (diaPagoSel === "auto") ? calcDiaPagoAuto(fechaCot) : Number(diaPagoSel);
-  const fechaPrimerPago = calcPrimerPago(fechaCot, diaPago);
-  const diasProrrateo = daysDiff(fechaCot, fechaPrimerPago);
   const msiSel = $("selMsi").value;
   const useMsi = msiSel !== "off";
   const msiTerm = useMsi ? Number(msiSel) : null;
@@ -321,39 +263,19 @@ function computeQuote(){
   // Aquí: interpretamos MSI como: se financia SOLO el 50% restante del precio (eng >= 50%) + add-ons financiados (vida/daños)
   // y se paga en msiTerm a capital fijo. Vida/Daños financiados se suman a capital (sin interés) en MSI.
   if (useMsi && msiTerm){
-    // MSI: sin intereses. Se difiere únicamente el monto restante (precio - enganche) en el plazo MSI.
-    // Ej: si enganche es 70%, se difiere 30% (precio - enganche). Si es 50%, se difiere 50%.
-    const principalMsiAuto = Math.max(precio - engMonto, 0);
-
-    const capAuto = principalMsiAuto / msiTerm;
-    const vidaConIva = principalVida > 0 ? (principalVida / msiTerm) : 0;   // en MSI no hay interés, solo capital
-    const daniosConIva = principalDanios > 0 ? (principalDanios / msiTerm) : 0;
-
+    const principalMsiAuto = Math.max(precio * 0.50, 0);
     const finMsi = principalMsiAuto + principalVida + principalDanios;
+    const pagoBase = finMsi / msiTerm; // sin interés
 
     const rows = [];
-    let saldoAuto = principalMsiAuto;
+    let saldo = finMsi;
     for (let i=1; i<=msiTerm; i++){
       const interes = 0;
       const ivaInt = 0;
-
-      saldoAuto = Math.max(saldoAuto - capAuto, 0);
-
-      // Anualidad (si aplica): mismo criterio que tradicional
-      const cargoAnual = (anualidades && anualidadMonto > 0 && i % 12 === 1 && i !== 1) ? anualidadMonto : 0;
-
-      const total = capAuto + vidaConIva + daniosConIva + cargoAnual;
-
-      rows.push({
-        i,
-        saldo: saldoAuto,
-        capital: capAuto,
-        interes,
-        ivaInt,
-        vida: vidaConIva,
-        danios: daniosConIva,
-        total
-      });
+      const capital = pagoBase;
+      saldo = Math.max(saldo - capital, 0);
+      const total = capital; // seguros ya van incluidos en capital en este modo (simple)
+      rows.push({i, saldo, capital, interes, ivaInt, vida:0, danios:0, total});
     }
 
     return {
@@ -367,7 +289,7 @@ function computeQuote(){
       daniosMonto, daniosTipo,
       pagoInicial,
       montoFin: finMsi,
-      pagoMensual: capAuto + vidaConIva + daniosConIva,
+      pagoMensual: pagoBase,
       table: rows
     };
   }
@@ -382,23 +304,6 @@ function computeQuote(){
   let saldoAuto = principalAuto;
   let saldoVida = principalVida;
   let saldoDanios = principalDanios;
-
-  // Pago 0 (ajuste de intereses por días desde la fecha de cotización hasta el primer día de pago)
-  // Por tu regla: SOLO intereses (+ IVA intereses). No amortiza capital.
-  if (diasProrrateo > 0 && tasaAnual > 0){
-    const interes0 = saldoAuto * tasaAnual * (diasProrrateo / 360);
-    const iva0 = interes0 * IVA;
-    rows.push({
-      i: 0,
-      saldo: saldoAuto,
-      capital: 0,
-      interes: interes0,
-      ivaInt: iva0,
-      vida: 0,
-      danios: 0,
-      total: interes0 + iva0
-    });
-  }
 
   for (let i=1; i<=plazo; i++){
     const intAuto = saldoAuto * r;
@@ -521,13 +426,23 @@ function buildWhatsAppText(result){
   const version = $("selVersion").value;
   const anio = $("inpAnio").value;
 
+  // Mensualidad total: toma el primer pago real de la tabla (si existe) para coincidir con "Ver tabla"
+  const mensualidadWhats = (()=>{
+    const rows = result?.table || [];
+    if (rows.length){
+      const r = (rows[0]?.i === 0 && rows[1]) ? rows[1] : rows[0];
+      if (r && Number.isFinite(r.total)) return r.total;
+    }
+    return result?.pagoMensual || 0;
+  })();
+
   const lines = [
     `Cotización ${result.modo} — ${modelo} ${version} ${anio}`,
     `Precio: ${money(result.precio)}`,
     `Enganche: ${money(result.engMonto)} (${pct(result.engPct)})`,
     `Plazo: ${result.plazo} meses`,
     result.tasaAnual ? `Tasa: ${(result.tasaAnual*100).toFixed(2)}% anual (sin IVA)` : `Tasa: MSI (0%)`,
-    `Pago mensual aprox.: ${money(result.pagoMensual)} (con IVA + seguros si aplica)`,
+    `Pago mensual aprox.: ${money(mensualidadWhats)} (con IVA + seguros si aplica)`,
     `Pago inicial aprox.: ${money(result.pagoInicial)}`,
     `Monto a financiar: ${money(result.montoFin)}`,
     `Seguro Vida: ${money(result.vidaMonto)} (${result.vidaTipo})`,
@@ -538,9 +453,8 @@ function buildWhatsAppText(result){
 }
 
 async function init(){
-  // SW (desactivado en desarrollo local para evitar cachés viejos/errores)
-  const DEV = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-  if ("serviceWorker" in navigator && !DEV){
+  // SW
+  if ("serviceWorker" in navigator){
     navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
     navigator.serviceWorker.addEventListener("message", (e)=>{
       if (e.data?.type === "UPDATE_AVAILABLE"){
@@ -616,15 +530,10 @@ async function init(){
     refreshRateAndTerms();
   };
 
-  // Defaults (fecha cotización / día de pago)
-  if ($("inpFechaCot")) $("inpFechaCot").value = toISODate(new Date());
-  if ($("inpFechaCot")) $("inpFechaCot").addEventListener("change", onAnyChange);
-  if ($("selDiaPago")) $("selDiaPago").addEventListener("change", onAnyChange);
-
-
   $("inpPrecio").addEventListener("input", ()=>{
     precioEditado = true;
-    onAnyChange();
+    recomputeEnganchePercents();
+    refreshRateAndTerms();
   });
   $("inpEngancheMonto").addEventListener("input", onAnyChange);
   $("inpEnganchePct").addEventListener("input", onAnyChange);
