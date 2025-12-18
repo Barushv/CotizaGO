@@ -436,19 +436,28 @@ function buildWhatsAppText(result){
     return result?.pagoMensual || 0;
   })();
 
+  const isMsi = String(result.modo || "").toUpperCase().includes("MSI");
+
   const lines = [
-    `Cotización ${result.modo} — ${modelo} ${version} ${anio}`,
-    `Precio: ${money(result.precio)}`,
-    `Enganche: ${money(result.engMonto)} (${pct(result.engPct)})`,
-    `Plazo: ${result.plazo} meses`,
-    result.tasaAnual ? `Tasa: ${(result.tasaAnual*100).toFixed(2)}% anual (sin IVA)` : `Tasa: MSI (0%)`,
-    `Pago mensual aprox.: ${money(mensualidadWhats)} (con IVA + seguros si aplica)`,
-    `Pago inicial aprox.: ${money(result.pagoInicial)}`,
-    `Monto a financiar: ${money(result.montoFin)}`,
-    `Seguro Vida: ${money(result.vidaMonto)} (${result.vidaTipo})`,
-    `Seguro Daños: ${money(result.daniosMonto)} (${result.daniosTipo})`,
-    `Comisión: ${(result.comPct*100).toFixed(2)}% (de contado)`
+    `🚗 *Honda Montejo - CotizaGO* ✅`,
+    `━━━━━━━━━━━━━━━━`,
+    `🧾 *Vehículo:* ${modelo} ${version} (${anio})`,
+    `💰 *Precio:* ${money(result.precio)}`,
+    `💵 *Enganche:* ${money(result.engMonto)} (${pct(result.engPct)})`,
+    `📌 *Plan:* ${result.plan || "—"}${isMsi ? " 🎉 *MSI*" : ""}`,
+    `🗓️ *Plazo:* ${result.plazo} meses`,
+    `🏷️ *Tasa:* ${result.tasaAnual ? (result.tasaAnual*100).toFixed(2) + "% anual (sin IVA)" : "0% (MSI)"}`,
+    `━━━━━━━━━━━━━━━━`,
+    `📉 *Monto a financiar:* ${money(result.montoFin)}`,
+    `💳 *Pago mensual aprox:* ${money(mensualidadWhats)} (con IVA + seguros si aplica)`,
+    `🛡️ *Seguro vida:* ${money(result.vidaMonto)} (${result.vidaTipo})`,
+    `🛡️ *Seguro daños:* ${money(result.daniosMonto)} (${result.daniosTipo})`,
+    `🤝 *Comisión:* ${(result.comPct*100).toFixed(2)}% (de contado)`,
+    `✅ *Pago inicial aprox:* ${money(result.pagoInicial)}`,
+    `━━━━━━━━━━━━━━━━`,
+    `📲 Si gustas, te comparto la tabla completa y el PDF.`
   ];
+
   return lines.join("\n");
 }
 
